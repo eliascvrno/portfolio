@@ -1,75 +1,56 @@
 name: CICD
 
-on: 
- push:
-  branches:  
-   - main
-
+on:
+  push:
+    branches:
+      - main
   pull_request:
-   branches:
-   - main
+    branches:
+      - main
 
-jobs:   
+jobs:
   security:
     runs-on: ubuntu-latest
-    steps: 
-     - name: Checkout code
-       uses: actions/checkout@v4
 
-     - name: setup node
-       uses: actions/setup-node@v4
-       with: 
-        node-version: '20'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-     - name: instalar dependencias 
-       run: npm ci  
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-     - name: security
-       run: npm audit 
+      - name: Instalar dependencias
+        run: npm ci
 
-  build-image: 
-   needs: [security]
-   runs-on: ubuntu-latest
-   steps: 
-     - name: Checkout code
-       uses: actions/checkout@v4
+      - name: Security audit
+        run: npm audit
 
-     - name: setup node
-       uses: actions/setup-node@v4
-       with: 
-        node-version: '20'  
+  build-image:
+    needs: [security]
+    runs-on: ubuntu-latest
 
-     - name: instalar dependencias 
-       run: npm ci  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-     - name: build 
-       run: npm run build  
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-     - name: build image
-       run: docker build -t portafolio .
+      - name: Instalar dependencias
+        run: npm ci
 
-     - name: scan image
-       uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 
-       with:
-         image-ref: 'portafolio'
-         severity: 'CRITICAL,HIGH'
+      - name: Build
+        run: npm run build
 
-  deploy:
-   needs: [build-image]
-   if: github.event_name == 'push'
-   runs-on: ubuntu-latest
+      - name: Build image
+        run: docker build -t portafolio .
 
-   steps:
-   
-    - name: Deploy to VM via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.VM_HOST }}
-        username: ${{ secrets.VM_USER }}
-        key: ${{ secrets.VM_SSH_KEY }}
-        script: |
-          cd ~/portafolio-linkedin
-          git pull
-          docker build -t portafolio .
-          docker rm -f portafolio
-          docker run -d --name portafolio -p 127.0.0.1:3000:3000 --env-file .env --restart unless-stopped portafolio
+      - name: Scan image
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          image-ref: 'portafolio'
+          severity: 'CRITICAL,HIGH'
