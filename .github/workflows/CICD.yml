@@ -1,0 +1,75 @@
+name: CICD
+
+on: 
+ push:
+  branches:  
+   - main
+
+  pull_request:
+   branches:
+   - main
+
+jobs:   
+  security:
+    runs-on: ubuntu-latest
+    steps: 
+     - name: Checkout code
+       uses: actions/checkout@v4
+
+     - name: setup node
+       uses: actions/setup-node@v4
+       with: 
+        node-version: '20'
+
+     - name: instalar dependencias 
+       run: npm ci  
+
+     - name: security
+       run: npm audit 
+
+  build-image: 
+   needs: [security]
+   runs-on: ubuntu-latest
+   steps: 
+     - name: Checkout code
+       uses: actions/checkout@v4
+
+     - name: setup node
+       uses: actions/setup-node@v4
+       with: 
+        node-version: '20'  
+
+     - name: instalar dependencias 
+       run: npm ci  
+
+     - name: build 
+       run: npm run build  
+
+     - name: build image
+       run: docker build -t portafolio .
+
+     - name: scan image
+       uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 
+       with:
+         image-ref: 'portafolio'
+         severity: 'CRITICAL,HIGH'
+
+  deploy:
+   needs: [build-image]
+   if: github.event_name == 'push'
+   runs-on: ubuntu-latest
+
+   steps:
+   
+    - name: Deploy to VM via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VM_HOST }}
+        username: ${{ secrets.VM_USER }}
+        key: ${{ secrets.VM_SSH_KEY }}
+        script: |
+          cd ~/portafolio-linkedin
+          git pull
+          docker build -t portafolio .
+          docker rm -f portafolio
+          docker run -d --name portafolio -p 127.0.0.1:3000:3000 --env-file .env --restart unless-stopped portafolio

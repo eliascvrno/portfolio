@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS featured_technologies text[] NOT NULL DEFAULT ARRAY['React','Node.js','PostgreSQL','TypeScript','Tailwind','Next.js','Docker','Git','MongoDB','Python','Redis','AWS']::text[];

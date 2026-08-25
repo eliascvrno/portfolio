@@ -1,0 +1,1 @@
+DELETE FROM public.skills WHERE name = '[]' OR name = '' OR name IS NULL;
