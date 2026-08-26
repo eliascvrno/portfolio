@@ -9,22 +9,48 @@ export const Route = createFileRoute("/api/chat")({
           const body = (await request.json()) as { messages: { role: "user" | "assistant"; content: string }[]; lang?: "es" | "en" };
           const lang = body.lang ?? "es";
 
-          const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+          // ── Diagnóstico de env vars ──
+          const groqKey = process.env.GROQ_API_KEY;
+          const supaUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+          const supaKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+          if (!groqKey) {
+            console.error("[chat] GROQ_API_KEY no está definida en .env");
+            return new Response(JSON.stringify({ error: "GROQ_API_KEY missing" }), { status: 500, headers: { "Content-Type": "application/json" } });
+          }
+          if (!supaUrl || !supaKey) {
+            console.error("[chat] Supabase env vars no definidas", { supaUrl: !!supaUrl, supaKey: !!supaKey });
+            return new Response(JSON.stringify({ error: "Supabase env vars missing" }), { status: 500, headers: { "Content-Type": "application/json" } });
+          }
+
+          const groq = new Groq({ apiKey: groqKey });
 
           const { createClient } = await import("@supabase/supabase-js");
-          const supa = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+          const supa = createClient(supaUrl, supaKey, {
             auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
           });
-          const [{ data: profile }, { data: projects }, { data: exp }, { data: skills }] = await Promise.all([
+
+          const [
+            { data: profile, error: profileErr },
+            { data: projects, error: projectsErr },
+            { data: exp, error: expErr },
+            { data: skills, error: skillsErr },
+          ] = await Promise.all([
             supa.from("profiles").select("*").limit(1).maybeSingle(),
             supa.from("projects").select("title,description_es,description_en,category,stack,demo_url"),
             supa.from("experiences").select("company,role_es,role_en,description_es,description_en,start_date,end_date"),
             supa.from("skills").select("name,category,level"),
           ]);
 
+          // Log errores de Supabase pero no abortar — el chat puede funcionar sin datos
+          if (profileErr) console.warn("[chat] profiles error:", profileErr.message);
+          if (projectsErr) console.warn("[chat] projects error:", projectsErr.message);
+          if (expErr) console.warn("[chat] experiences error:", expErr.message);
+          if (skillsErr) console.warn("[chat] skills error:", skillsErr.message);
+
           const formatRules = lang === "es"
-            ? `\n\nREGLAS DE FORMATO IMPORTANTES:\n- NUNCA uses markdown. Escribe el email y teléfono como texto plano, sin asteriscos.\n- Email: matugutierrez7@gmail.com\n- Teléfono/WhatsApp: +54 9 11 5937-1225`
-            : `\n\nIMPORTANT FORMATTING RULES:\n- NEVER use markdown. Write email and phone as plain text.\n- Email: matugutierrez7@gmail.com\n- Phone/WhatsApp: +54 9 11 5937-1225`;
+            ? `\n\nREGLAS DE FORMATO IMPORTANTES:\n- NUNCA uses markdown. Escribe el email y teléfono como texto plano, sin asteriscos.\n- Email: eliasseverinok@gmail.com\n- Teléfono/WhatsApp: +593 96 338 2336`
+            : `\n\nIMPORTANT FORMATTING RULES:\n- NEVER use markdown. Write email and phone as plain text.\n- Email: eliasseverinok@gmail.com\n- Phone/WhatsApp: +593 96 338 2336`;
 
           const system = lang === "es"
             ? `Eres un asistente IA del portfolio de ${profile?.name ?? "Elias Severino"}. Responde SIEMPRE en español, en primera persona como si fueras Elias. Sé conciso, amable y profesional. Usa SOLO la siguiente información:\n\nPERFIL:\n${JSON.stringify(profile)}\n\nPROYECTOS:\n${JSON.stringify(projects)}\n\nEXPERIENCIA:\n${JSON.stringify(exp)}\n\nHABILIDADES:\n${JSON.stringify(skills)}\n\nSi te preguntan algo que no está en estos datos, di amablemente que no tienes esa información y sugiere contactar por el formulario.${formatRules}`
@@ -35,8 +61,9 @@ export const Route = createFileRoute("/api/chat")({
             ...body.messages.map((m) => ({ role: m.role === "assistant" ? "assistant" as const : "user" as const, content: m.content })),
           ];
 
+          console.log("[chat] Llamando a Groq con modelo qwen/qwen3.8-27b...");
           const stream = await groq.chat.completions.create({
-            model: "llama-3.1-8b-instant",
+            model: "qwen/qwen3.8-27b",
             messages,
             stream: true,
           });
@@ -62,7 +89,11 @@ export const Route = createFileRoute("/api/chat")({
           });
         } catch (err) {
           console.error("[chat] Unhandled error:", err);
-          return new Response("Server error", { status: 500 });
+          const message = err instanceof Error ? err.message : String(err);
+          return new Response(JSON.stringify({ error: message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
         }
       },
     },

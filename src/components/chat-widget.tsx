@@ -92,7 +92,16 @@ export function ChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: next, lang }),
       });
-      if (!res.ok) throw new Error("chat error");
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          const json = await res.json();
+          if (json?.error) detail = json.error;
+        } catch {}
+        console.error("[chat] Server error:", detail);
+        setMessages((m) => [...m, { role: "assistant", content: lang === "es" ? `Error del servidor: ${detail}` : `Server error: ${detail}` }]);
+        return;
+      }
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let acc = "";
@@ -107,12 +116,14 @@ export function ChatWidget() {
           return copy;
         });
       }
-    } catch {
-      setMessages((m) => [...m, { role: "assistant", content: lang === "es" ? "Lo siento, hubo un error." : "Sorry, an error occurred." }]);
+    } catch (e) {
+      console.error("[chat] Fetch error:", e);
+      setMessages((m) => [...m, { role: "assistant", content: lang === "es" ? "Lo siento, hubo un error de red." : "Sorry, a network error occurred." }]);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <>

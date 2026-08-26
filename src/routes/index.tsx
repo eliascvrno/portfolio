@@ -21,8 +21,8 @@ import { TechBadges } from "@/components/tech-badges";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Mat\u00edas Guti\u00e9rrez \u2014 Full Stack Developer" },
-      { name: "description", content: "Portfolio de Mat\u00edas Guti\u00e9rrez. Aplicaciones web modernas, escalables y de alto rendimiento." },
+      { title: "Elias Severino, FullStack Developer" },
+      { name: "description", content: "Portfolio de Elias Severino. Aplicaciones web modernas, escalables y de alto rendimiento." },
     ],
   }),
   component: Index,
