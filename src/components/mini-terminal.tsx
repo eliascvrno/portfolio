@@ -141,14 +141,14 @@ export function MiniTerminal() {
           </button>
           <span className="size-3 rounded-full bg-yellow-500" />
           <span className="size-3 rounded-full bg-green-500" />
-          <span className="ml-3 text-xs text-muted-foreground">guest@matu:~</span>
+          <span className="ml-3 text-xs text-muted-foreground">guest@elias:~</span>
         </div>
         <div ref={scrollRef} className="h-64 sm:h-72 overflow-y-auto p-4 text-[13px] leading-relaxed">
           {lines.map((l, i) => (
             <div key={i} className={l.kind === "sys" ? "text-muted-foreground" : l.kind === "in" ? "text-green-400" : "text-foreground/90"}>
               {l.kind === "in" ? (
                 <span>
-                  <span className="text-green-400">guest@matu</span>
+                  <span className="text-green-400">guest@elias</span>
                   <span className="text-muted-foreground">:</span>
                   <span className="text-green-300">~$</span>{" "}
                   <span className="text-foreground">{l.text}</span>
@@ -168,7 +168,7 @@ export function MiniTerminal() {
             }}
             className="flex items-center gap-2 mt-1"
           >
-            <span className="text-green-400">guest@matu</span>
+            <span className="text-green-400">guest@elias</span>
             <span className="text-muted-foreground -ml-2">:</span>
             <span className="text-green-300 -ml-2">~$</span>
             <input

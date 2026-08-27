@@ -328,9 +328,9 @@ function Index() {
       ? ((profile as any).featured_technologies as string[])
       : ["React", "Node.js", "TypeScript", "PostgreSQL", "Tailwind", "Supabase"];
 
-  const name = (profile?.name ?? "Mat\u00edas Guti\u00e9rrez").split(" ");
-  const firstName = name[0] ?? "Mat\u00edas";
-  const lastName = name.slice(1).join(" ") || "Guti\u00e9rrez";
+  const name = (profile?.name ?? "Elias Severino").split(" ");
+  const firstName = name[0] ?? "Elias";
+  const lastName = name.slice(1).join(" ") || "Severino";
 
   const stats = [
     { value: `+${profile?.years_experience ?? 2}`, label: lang === "es" ? "A\u00f1os de\nexperiencia" : "Years of\nexperience" },
@@ -665,15 +665,15 @@ function Index() {
                 to="/contacto"
                 className="mt-8 group inline-flex items-center gap-3 rounded-full bg-primary text-primary-foreground px-7 py-3.5 text-sm font-medium hover:bg-foreground hover:text-background transition-colors duration-300"
               >
-                {lang === "es" ? "Escribime" : "Contact me"}
+                {lang === "es" ? "Escribeme" : "Contact me"}
                 <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:rotate-45" />
               </Link>
             </div>
             <div className="hidden lg:block bg-border" />
             <div className="p-8 sm:p-12 flex flex-col justify-center gap-5">
               {[
-                { label: lang === "es" ? "Ubicaci\u00f3n" : "Location", value: profile?.location ?? "Buenos Aires, Argentina" },
-                { label: "Email", value: profile?.email ?? "matugutierrez7@gmail.com" },
+                { label: lang === "es" ? "Ubicaci\u00f3n" : "Location", value: profile?.location ?? "Guayaquil, Ecuador" },
+                { label: "Email", value: profile?.email ?? "eliasseverinok@gmail.com" },
                 { label: lang === "es" ? "Disponibilidad" : "Availability", value: lang === "es" ? "Freelance / Full time" : "Freelance / Full time" },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between border-b border-border pb-4 last:border-0 last:pb-0">
